@@ -12,7 +12,7 @@ opts.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb
 
 
 # Chrome bootup
-driver = webdriver.Chrome('../chromedriver', chrome_options=opts)
+driver = webdriver.Chrome(chrome_options=opts)
 
 
 # open url
