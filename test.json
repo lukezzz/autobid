@@ -1,0 +1,98 @@
+{
+    "appId": "quota",
+    "device": "desktop",
+    "agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4215.0 Safari/537.36 Edg/86.0.597.0",
+    "token": "feef8ee3-7d9e-43bd-8b6f-a14dbe4e26dc",
+    "items": [
+        {
+            "uri": "/",
+            "objectId": "56753790",
+            "referrer": "https://paimai.alltobid.com/",
+            "level": "info",
+            "action": "HqDelay",
+            "content": "repaimai2.alltobid.com,2020-12-19 11:23:04,2020-12-19 11:23:04",
+            "seqId": 946
+        },
+        {
+            "uri": "/",
+            "objectId": "56753790",
+            "referrer": "https://paimai.alltobid.com/",
+            "level": "info",
+            "action": "HqDelay",
+            "content": "repaimai2.alltobid.com,2020-12-19 11:23:05,2020-12-19 11:23:05",
+            "seqId": 947
+        },
+        {
+            "uri": "/",
+            "objectId": "56753790",
+            "referrer": "https://paimai.alltobid.com/",
+            "level": "info",
+            "action": "HqDelay",
+            "content": "repaimai2.alltobid.com,2020-12-19 11:23:06,2020-12-19 11:23:06",
+            "seqId": 948
+        },
+        {
+            "uri": "/",
+            "objectId": "56753790",
+            "referrer": "https://paimai.alltobid.com/",
+            "level": "info",
+            "action": "HqDelay",
+            "content": "repaimai2.alltobid.com,2020-12-19 11:23:07,2020-12-19 11:23:07",
+            "seqId": 949
+        },
+        {
+            "uri": "/",
+            "objectId": "56753790",
+            "referrer": "https://paimai.alltobid.com/",
+            "level": "info",
+            "action": "HqDelay",
+            "content": "repaimai2.alltobid.com,2020-12-19 11:23:08,2020-12-19 11:23:08",
+            "seqId": 950
+        },
+        {
+            "uri": "/",
+            "objectId": "56753790",
+            "referrer": "https://paimai.alltobid.com/",
+            "level": "info",
+            "action": "HqDelay",
+            "content": "repaimai2.alltobid.com,2020-12-19 11:23:09,2020-12-19 11:23:09",
+            "seqId": 951
+        },
+        {
+            "uri": "/",
+            "objectId": "56753790",
+            "referrer": "https://paimai.alltobid.com/",
+            "level": "info",
+            "action": "HqDelay",
+            "content": "repaimai2.alltobid.com,2020-12-19 11:23:10,2020-12-19 11:23:10",
+            "seqId": 952
+        },
+        {
+            "uri": "/",
+            "objectId": "56753790",
+            "referrer": "https://paimai.alltobid.com/",
+            "level": "info",
+            "action": "HqDelay",
+            "content": "repaimai2.alltobid.com,2020-12-19 11:23:11,2020-12-19 11:23:11",
+            "seqId": 953
+        },
+        {
+            "uri": "/",
+            "objectId": "56753790",
+            "referrer": "https://paimai.alltobid.com/",
+            "level": "info",
+            "action": "HqDelay",
+            "content": "repaimai2.alltobid.com,2020-12-19 11:23:12,2020-12-19 11:23:12",
+            "seqId": 954
+        },
+        {
+            "uri": "/",
+            "objectId": "56753790",
+            "referrer": "https://paimai.alltobid.com/",
+            "level": "info",
+            "action": "HqDelay",
+            "content": "repaimai2.alltobid.com,2020-12-19 11:23:13,2020-12-19 11:23:13",
+            "seqId": 955
+        }
+    ]
+}
