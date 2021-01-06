@@ -49,10 +49,20 @@ class Chrome(threading.Thread):
 
     def run(self):
         logger.debug('启动浏览器')
-        # add user agent
         opts = Options()
+        # add user agent
         opts.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4215.0 Safari/537.36 Edg/86.0.597.0")
+        # remove automation popup
         opts.add_experimental_option("excludeSwitches", ['enable-automation'])
+        # disable pwd mgmt
+        opts.add_experimental_option(
+            'prefs', 
+            {
+                'credentials_enable_service': False,
+                'profile': {
+                    'password_manager_enabled': False
+                }
+            })
         # set ws log
         capabilities = DesiredCapabilities.CHROME
         capabilities['goog:loggingPrefs'] = {"performance": "ALL"}
@@ -112,7 +122,7 @@ class ConsoleUi():
 
 
 
-class FormUi:
+class LoginForm:
     def __init__(self, frame):
         self.frame = frame
 
@@ -130,9 +140,6 @@ class FormUi:
         self.txt_password.set('12345')
         self.ent_password = tk.Entry(self.frame, textvariable=self.txt_password)
         self.ent_password.grid(row=1, column=1)
-
-        self.lbl_test = tk.Label(self.frame, text="")
-        self.lbl_test.grid(row=3, column=0, padx=10, pady=10)
 
         self.btn_init_login = tk.Button(self.frame, text="设置登录信息", command=self.init_login, state=tk.NORMAL)
         self.btn_init_login.grid(row=2, column=0, padx=10, pady=10)
@@ -200,7 +207,6 @@ class FormUi:
    
     def wait_user_click_captcha(self):
         # check 3 'wicon-point'
-        self.lbl_test.config(text='testing')
         delay = 10
         try:
             wicon_points = WebDriverWait(driver, delay).until(EC.presence_of_all_elements_located((By.CLASS_NAME, 'wicon-point')))
@@ -211,9 +217,10 @@ class FormUi:
                 time.sleep(1)
 
             try:
-                driver.find_element(By.XPATH, '//*[@id="root"]/div/div[1]/div/div[2]/div[2]/div[4]').click()
-                logger.log(logging.INFO, "参加投标竞买成功")
+                driver.find_element(By.CLASS_NAME, 'walert').click()
+                logger.log(logging.INFO, "参加投标竞买失败")
             except:
+                driver.find_element(By.XPATH, '/html/body/div/div/div[1]/div/div[2]/div[2]/div[4]/span').click()
                 logger.log(logging.INFO, "参加投标竞买失败")
         except TimeoutException:
             logger.log(logging.ERROR, "验证码超时")
@@ -251,7 +258,7 @@ class App:
 
 
         # Initialize all frames
-        self.form = FormUi(form_frame)
+        self.login_form = LoginForm(form_frame)
         self.console = ConsoleUi(console_frame)
 
         
