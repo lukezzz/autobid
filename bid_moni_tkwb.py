@@ -122,7 +122,7 @@ class ConsoleUi():
 
 
 
-class LoginForm:
+class LoginFormUI:
     def __init__(self, frame):
         self.frame = frame
 
@@ -145,7 +145,28 @@ class LoginForm:
         self.btn_init_login.grid(row=2, column=0, padx=10, pady=10)
 
         self.btn_start_bid = tk.Button(self.frame, text="开始竞标", command=lambda: threading.Thread(target=self.wait_user_click_captcha).start(), state=tk.NORMAL)
-        self.btn_start_bid.grid(row=2, column=1, padx=10, pady=10)
+        self.btn_start_bid.grid(row=2, column=1, pady=10)
+        
+        self.btn_sync_bid = tk.Button(self.frame, text="同步", command=lambda: threading.Thread(target=self.get_bidinfo, daemon=True).start(), state=tk.DISABLED)
+        self.btn_sync_bid.grid(row=2, column=2, pady=10)
+
+        self.lbl_p1_end_dt = tk.Label(self.frame, text="首次出价时段结束时间:")
+        self.lbl_p1_end_dt.grid(row=3, column=0, padx=10, pady=10)
+        self.lbl_p1_end_dt_content = tk.Label(self.frame, text="00:00")
+        self.lbl_p1_end_dt_content.grid(row=3, column=1, padx=10, pady=10)
+
+        self.lbl_p2_end_dt = tk.Label(self.frame, text="修改出价时段结束时间:")
+        self.lbl_p2_end_dt.grid(row=4, column=0, padx=10, pady=10)
+        self.lbl_p2_end_dt_content = tk.Label(self.frame, text="00:00")
+        self.lbl_p2_end_dt_content.grid(row=4, column=1, padx=10, pady=10)
+
+        self.lbl_cur_price = tk.Label(self.frame, text="最低成交价格:")
+        self.lbl_cur_price.grid(row=5, column=0, padx=10, pady=10)
+        self.lbl_cur_price_conent = tk.Label(self.frame, text="0")
+        self.lbl_cur_price_conent.grid(row=5, column=1, padx=10, pady=10)
+
+
+    
 
     def init_login(self):
         # start init login stage
@@ -221,13 +242,51 @@ class LoginForm:
                 logger.log(logging.INFO, "参加投标竞买失败")
             except:
                 driver.find_element(By.XPATH, '/html/body/div/div/div[1]/div/div[2]/div[2]/div[4]/span').click()
-                logger.log(logging.INFO, "参加投标竞买失败")
+                logger.log(logging.INFO, "参加投标竞买成功")
+                self.btn_start_bid['state'] = tk.DISABLED
+                # threading.Thread(target=self.get_bidinfo, daemon=True).start()
+                self.btn_sync_bid['state'] = tk.NORMAL
+
         except TimeoutException:
             logger.log(logging.ERROR, "验证码超时")
     
+    def get_bidinfo(self):
+        self.btn_sync_bid['state'] = tk.DISABLED
+        while(True):
+            try:
+                bid_info = driver.find_element(By.CLASS_NAME, 'whpubinfo')
+                
+            except:
+                logger.log(logging.ERROR, "没有获取到拍牌信息")
 
+
+            if bid_info:
+                proinfo = bid_info.find_element(By.CLASS_NAME, 'proinfo')
+                detail_proinfo = bid_info.find_element(By.CLASS_NAME, 'detail-proinfo')
+
+                # check stage
+                cur_stage = detail_proinfo.find_elements(By.TAG_NAME, 'span')[1]
+                print(cur_stage.text)
+
+                p1_end = proinfo.find_elements(By.TAG_NAME, 'span')[10]
+                self.lbl_p1_end_dt_content.config(text=p1_end.text)
+
+                p2_end = proinfo.find_elements(By.TAG_NAME, 'span')[13]
+                self.lbl_p2_end_dt_content.config(text=p2_end.text)
+
+                
+
+                if cur_stage.text == '首次出价时段':
+                    cur_price = detail_proinfo.find_elements(By.TAG_NAME, 'span')[7]
+                    self.lbl_cur_price_conent.config(text=cur_price.text)
+                else:
+                    cur_price = detail_proinfo.find_elements(By.TAG_NAME, 'span')[5]
+                    self.lbl_cur_price_conent.config(text=cur_price.text)
+                    pass
+            time.sleep(0.5)
     
-
+    
+            
 class App:
 
     def __init__(self, root):
@@ -246,19 +305,22 @@ class App:
         vertical_pane.grid(row=0, column=0, sticky="nsew")
         horizontal_pane = ttk.PanedWindow(vertical_pane, orient=HORIZONTAL)
         vertical_pane.add(horizontal_pane)
-        form_frame = ttk.Labelframe(horizontal_pane, text="登陆设置")
-        form_frame.columnconfigure(1, weight=1)
-        horizontal_pane.add(form_frame, weight=1)
+
+        login_form_frame = ttk.Labelframe(horizontal_pane, text="登陆设置")
+        login_form_frame.columnconfigure(1, weight=1)
+        horizontal_pane.add(login_form_frame, weight=1)
+
         console_frame = ttk.Labelframe(horizontal_pane, text="操作日志")
         console_frame.columnconfigure(0, weight=1)
         console_frame.rowconfigure(0, weight=1)
         horizontal_pane.add(console_frame, weight=1)
         # third_frame = ttk.Labelframe(vertical_pane, text="Third Frame")
         # vertical_pane.add(third_frame, weight=1)
+        
 
 
         # Initialize all frames
-        self.login_form = LoginForm(form_frame)
+        self.login_form = LoginFormUI(login_form_frame)
         self.console = ConsoleUi(console_frame)
 
         
