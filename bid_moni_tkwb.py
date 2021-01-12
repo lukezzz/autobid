@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 
 import tkinter as tk
 import tkinter.font as tkFont
+from selenium.webdriver.common import action_chains
 from tkinter.scrolledtext import ScrolledText
 from tkinter import Tk, ttk, VERTICAL, HORIZONTAL, N, S, E, W
 
@@ -45,7 +46,7 @@ def center_window(win, w=None, h=None):
     ws = win.winfo_screenwidth()
     hs = win.winfo_screenheight()
     x = int((ws/2) - (w/2))
-    y = int((hs/2) - (h/2))
+    y = int((hs/2) - (h/2)) - 30
     win.geometry("{}x{}+{}+{}".format(w,h,x,y))
 
 # font setting
@@ -173,7 +174,7 @@ class ConsoleUi():
     def __init__(self, frame):
         self.frame = frame
         # Create a ScrolledText wdiget
-        self.scrolled_text = ScrolledText(frame, state='disabled', height=18, width=54)
+        self.scrolled_text = ScrolledText(frame, state='disabled', height=14, width=54)
         self.scrolled_text.grid(row=0, column=0, sticky=(N, S, W))
         self.scrolled_text.configure(font='TkFixedFont')
         self.scrolled_text.tag_config('INFO', foreground='black')
@@ -459,14 +460,11 @@ class PolicyUi:
 
         self.policy_thread_status = False
         
-        title_label(self.frame, '第一阶段出价', 14, True).pack(side=tk.TOP, padx=10)
+        title_label(self.frame, '出价策略', 14, True).pack(side=tk.TOP, padx=10)
         p1_frame1 = tk.Frame(self.frame, bg='white')
         self.btn_p1_submit = tk.Button(p1_frame1, text="第一阶段出价", command=lambda: threading.Thread(target=self.p1_submit, daemon=True).start(), state=tk.NORMAL)
         self.btn_p1_submit.pack(side=tk.LEFT, padx=10, pady=5)
         p1_frame1.pack(fill=tk.X)
-        
-        divider(self.frame, 'h').pack(fill=tk.X, pady=10)
-        title_label(self.frame, '第二阶段出价', 14, True).pack(side=tk.TOP, padx=10)
 
         p2_manul_policy_frame = tk.Frame(self.frame, bg='white')
         self.label(p2_manul_policy_frame, text="输入整数价格: +").pack(side=tk.LEFT, pady=5)
@@ -478,25 +476,22 @@ class PolicyUi:
         self.btn_p2_plus.pack(side=tk.LEFT, padx=10)
         p2_manul_policy_frame.pack(fill=tk.X)
 
-        divider(self.frame, 'h', border=1).pack(fill=tk.X, pady=10)
-        self.label(self.frame, text="自动策略").pack(fill=tk.X, pady=5)
-
         p2_policy1_frame = tk.Frame(self.frame, bg='white')
         self.label(p2_policy1_frame, text="策略1: 52s + 400, 56.8s提交").pack(side=tk.LEFT, pady=5)
-        self.btn_p2_policy1 = tk.Button(p2_policy1_frame, text="策略1", command=lambda: self.set_policy(400, 56, 800), state=tk.NORMAL)
+        self.btn_p2_policy1 = tk.Button(p2_policy1_frame, text="策略1", command=lambda: self.set_policy(52, 400, "56.8"), state=tk.NORMAL)
         self.btn_p2_policy1.pack(side=tk.LEFT, pady=5)
         p2_policy1_frame.pack(fill=tk.X)
 
 
         p2_policy2_frame = tk.Frame(self.frame, bg='white')
         self.label(p2_policy2_frame, text="策略2: 49s + 500, 57.3s提交").pack(side=tk.LEFT, pady=5)
-        self.btn_p2_policy2 = tk.Button(p2_policy2_frame, text="策略2", command=lambda: self.set_policy(500, 57, 300), state=tk.NORMAL)
+        self.btn_p2_policy2 = tk.Button(p2_policy2_frame, text="策略2", command=lambda: self.set_policy(49, 500, "57.3"), state=tk.NORMAL)
         self.btn_p2_policy2.pack(side=tk.LEFT, pady=5)
         p2_policy2_frame.pack(fill=tk.X)
 
 
         p2_cancel_frame = tk.Frame(self.frame, bg='white')
-        self.btn_cancel_policy = tk.Button(p2_cancel_frame, text="取消", command=lambda: self.cancecl_policy, state=tk.NORMAL)
+        self.btn_cancel_policy = tk.Button(p2_cancel_frame, text="取消", command=lambda: self.cancecl_policy(), state=tk.NORMAL)
         self.btn_cancel_policy.pack(side=tk.LEFT, pady=5)
         p2_cancel_frame.pack(fill=tk.X)
 
@@ -580,27 +575,28 @@ class PolicyUi:
     def cancecl_policy(self):
         self.policy_thread_status = False
 
-    def set_policy(self, inc_price, advance_sec, delay_microsec):
+    def set_policy(self, inc_time, inc_price, advance_time):
 
-        if not delay_microsec or delay_microsec > 999:
-            delay_microsec = 0
+        adv_t = datetime.strptime(advance_time, '%S.%f')
+
+        delay_microsec = adv_t.microsecond / 1000
 
         if self.policy_thread_status == False:
-            logger.log(logging.ERROR, "加价：{} 时间：{} 抖动：{}".format(inc_price, advance_sec, delay_microsec))
-            threading.Thread(target=self.p2_autopolicy, args=(inc_price, advance_sec, delay_microsec,), daemon=True).start()
             self.policy_thread_status = True
+            logger.log(logging.WARN, "出价时间: {} 加价：{} 提交秒数：{} 延时：{}ms".format(inc_time, inc_price, adv_t.second, delay_microsec))
+            threading.Thread(target=self.p2_autopolicy, args=(inc_time, inc_price, adv_t.second, delay_microsec,), daemon=True).start()
         else:
             logger.log(logging.ERROR, "正在执行策略，请先取消")
 
 
-    def p2_autopolicy(self, inc_price, advance_sec, delay_microsec):
+    def p2_autopolicy(self, inc_time, inc_price, advance_sec, delay_microsec):
 
         global lowest_price
         global end_dt
         # check dt
         # end_dt = self.state.lbl_p2_end_dt_content.cget("text")
         while(self.policy_thread_status):
-            if diff_timer(end_dt, advance_sec, delay_microsec):
+            if diff_timer(end_dt, inc_time, 0):
                 whsetpricetip = driver.find_element(By.XPATH, '/html/body/div/div/div[2]/div/div[3]/div[2]/div[2]/div/div[2]/div[3]/div[2]/div/input')
                 whsetpricebtn = driver.find_element(By.CLASS_NAME, 'whsetpricebtn')
                 submit_price = int(lowest_price) + inc_price
@@ -616,7 +612,7 @@ class PolicyUi:
             time.sleep(0.2)
 
         while(self.policy_thread_status):
-            if diff_timer(end_dt, 56, 800):
+            if diff_timer(end_dt, advance_sec, delay_microsec):
                 if self.pricecaptcha():
                     break
             time.sleep(0.2)    
@@ -802,9 +798,9 @@ class App:
 
     def main(self, parent):
         frame = tk.Frame(parent, bg='white')
-        self.main_login(frame).pack(fill=tk.X, padx=10, pady=15)
-        self.main_bid_status(frame).pack(fill=tk.X, padx=10, pady=15)
-        self.main_policy(frame).pack(fill=tk.X, padx=10, pady=15)
+        self.main_login(frame).pack(fill=tk.X, padx=10, pady=2)
+        self.main_bid_status(frame).pack(fill=tk.X, padx=10, pady=2)
+        self.main_policy(frame).pack(fill=tk.X, padx=10, pady=2)
         return frame
 
     def bottom(self, parent):
