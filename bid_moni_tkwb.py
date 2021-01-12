@@ -2,7 +2,7 @@ import logging
 import queue
 import threading
 import signal
-import json
+import subprocess
 import time
 from datetime import datetime, timedelta
 
@@ -362,19 +362,26 @@ class StateUi:
             font=_font(size=16, bold=tkFont.BOLD)
             )
         self.lbl_cur_bider_content.pack(side=tk.LEFT, pady=5)
-        cur_bider_frame.pack(fill=tk.X)
 
-        cur_price_frame = tk.Frame(self.frame, bg='white')
-        self.label(cur_price_frame, text="最低成交价格:").pack(side=tk.LEFT, pady=5)
+        self.label(cur_bider_frame, text="最低成交价格:").pack(side=tk.LEFT, pady=5)
         self.lbl_cur_price_content = tk.Label(
-            cur_price_frame, 
+            cur_bider_frame, 
             text="0", 
             font=_font(size=16, bold=tkFont.BOLD),
             fg='red')
         self.lbl_cur_price_content.pack(side=tk.LEFT, pady=5)
-        cur_price_frame.pack(fill=tk.X)
+
+        self.label(cur_bider_frame, text="延时:").pack(side=tk.LEFT, pady=5)
+        self.lbl_cur_sys_delay = tk.Label(
+            cur_bider_frame, 
+            text="0ms", 
+            font=_font(size=16, bold=tkFont.NORMAL),
+            fg='green')
+        self.lbl_cur_sys_delay.pack(side=tk.LEFT, pady=5)
+        cur_bider_frame.pack(fill=tk.X)
 
         threading.Thread(target=self.get_bidinfo, daemon=True).start()
+        threading.Thread(target=self.get_ping, daemon=True).start()
 
 
     def label(self, frame, text, size=12, fg='gray'):
@@ -454,6 +461,24 @@ class StateUi:
             else:
                 time.sleep(3)
 
+    def get_ping(self):
+        host = '180.153.24.1'
+        while(True):
+            try:
+                response = subprocess.check_output(
+                    ['ping', '-c', '1', host],
+                    stderr=subprocess.STDOUT,
+                    universal_newlines=True
+                )
+                delay = response.split()[12].split('=')[1]
+                self.lbl_cur_sys_delay['text'] = "{} ms".format(delay) 
+            except subprocess.CalledProcessError:
+                self.lbl_cur_sys_delay['text'] = 'unknow'
+            
+            time.sleep(1)
+
+
+
 class PolicyUi:
     def __init__(self, frame):
         self.frame = frame
@@ -478,7 +503,7 @@ class PolicyUi:
 
         p2_policy1_frame = tk.Frame(self.frame, bg='white')
         self.label(p2_policy1_frame, text="策略1: 52s + 400, 56.8s提交").pack(side=tk.LEFT, pady=5)
-        self.btn_p2_policy1 = tk.Button(p2_policy1_frame, text="策略1", command=lambda: self.set_policy(52, 400, "56.8"), state=tk.NORMAL)
+        self.btn_p2_policy1 = tk.Button(p2_policy1_frame, text="策略1", bg='red', fg='white', command=lambda: self.set_policy(52, 400, "56.8"), state=tk.NORMAL)
         self.btn_p2_policy1.pack(side=tk.LEFT, pady=5)
         p2_policy1_frame.pack(fill=tk.X)
 
