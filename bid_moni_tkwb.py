@@ -342,16 +342,24 @@ class StateUi:
             font=_font(size=16, bold=tkFont.BOLD)
             )
         self.lbl_p1_end_dt_content.pack(side=tk.LEFT, pady=5)
-        time_frame1.pack(fill=tk.X)
 
-        time_frame2 = tk.Frame(self.frame, bg='white')
-        self.label(time_frame2, text="修改出价时段结束时间:").pack(side=tk.LEFT, pady=5)
+        self.label(time_frame1, text="修改出价时段结束时间:").pack(side=tk.LEFT, pady=5)
         self.lbl_p2_end_dt_content = tk.Label(
-            time_frame2, 
+            time_frame1, 
             text="00:00",
             font=_font(size=16, bold=tkFont.BOLD)
             )
         self.lbl_p2_end_dt_content.pack(side=tk.LEFT, pady=5)
+        time_frame1.pack(fill=tk.X)
+
+        time_frame2 = tk.Frame(self.frame, bg='white')
+        self.label(time_frame2, text="网络延时:").pack(side=tk.LEFT, pady=5)
+        self.lbl_cur_sys_delay = tk.Label(
+            time_frame2, 
+            text="0ms", 
+            font=_font(size=16, bold=tkFont.NORMAL),
+            fg='green')
+        self.lbl_cur_sys_delay.pack(side=tk.LEFT, pady=5)
         time_frame2.pack(fill=tk.X)
 
         cur_bider_frame = tk.Frame(self.frame, bg='white')
@@ -370,14 +378,6 @@ class StateUi:
             font=_font(size=16, bold=tkFont.BOLD),
             fg='red')
         self.lbl_cur_price_content.pack(side=tk.LEFT, pady=5)
-
-        self.label(cur_bider_frame, text="延时:").pack(side=tk.LEFT, pady=5)
-        self.lbl_cur_sys_delay = tk.Label(
-            cur_bider_frame, 
-            text="0ms", 
-            font=_font(size=16, bold=tkFont.NORMAL),
-            fg='green')
-        self.lbl_cur_sys_delay.pack(side=tk.LEFT, pady=5)
         cur_bider_frame.pack(fill=tk.X)
 
         threading.Thread(target=self.get_bidinfo, daemon=True).start()
@@ -503,16 +503,43 @@ class PolicyUi:
 
         p2_policy1_frame = tk.Frame(self.frame, bg='white')
         self.label(p2_policy1_frame, text="策略1: 52s + 400, 56.8s提交").pack(side=tk.LEFT, pady=5)
-        self.btn_p2_policy1 = tk.Button(p2_policy1_frame, text="策略1", bg='red', fg='white', command=lambda: self.set_policy(52, 400, "56.8"), state=tk.NORMAL)
+        self.btn_p2_policy1 = tk.Button(p2_policy1_frame, text="策略1", fg='red',command=lambda: self.set_policy(52, 400, "56.8"), state=tk.NORMAL)
         self.btn_p2_policy1.pack(side=tk.LEFT, pady=5)
         p2_policy1_frame.pack(fill=tk.X)
 
 
         p2_policy2_frame = tk.Frame(self.frame, bg='white')
         self.label(p2_policy2_frame, text="策略2: 49s + 500, 57.3s提交").pack(side=tk.LEFT, pady=5)
-        self.btn_p2_policy2 = tk.Button(p2_policy2_frame, text="策略2", command=lambda: self.set_policy(49, 500, "57.3"), state=tk.NORMAL)
+        self.btn_p2_policy2 = tk.Button(p2_policy2_frame, text="策略2", fg='red', command=lambda: self.set_policy(49, 500, "57.3"), state=tk.NORMAL)
         self.btn_p2_policy2.pack(side=tk.LEFT, pady=5)
         p2_policy2_frame.pack(fill=tk.X)
+
+        p2_man_policy_frame = tk.Frame(self.frame, bg='white')
+        self.label(p2_man_policy_frame, text="出价时间").pack(side=tk.LEFT, pady=5)
+        self.man_add_price_time = tk.StringVar()
+        self.man_add_price_time.set('49')
+        self.ent_man_add_price_time = tk.Entry(p2_man_policy_frame, textvariable=self.man_add_price_time, width=3)
+        self.ent_man_add_price_time.pack(side=tk.LEFT)
+        self.label(p2_man_policy_frame, text="加价").pack(side=tk.LEFT, pady=5)
+        self.man_add_price = tk.StringVar()
+        self.man_add_price.set('500')
+        self.ent_man_add_price = tk.Entry(p2_man_policy_frame, textvariable=self.man_add_price, width=5)
+        self.ent_man_add_price.pack(side=tk.LEFT)
+        self.label(p2_man_policy_frame, text="提交时间").pack(side=tk.LEFT, pady=5)
+        self.man_submit_price = tk.StringVar()
+        self.man_submit_price.set('57.3')
+        self.ent_man_submit_price = tk.Entry(p2_man_policy_frame, textvariable=self.man_submit_price, width=5)
+        self.ent_man_submit_price.pack(side=tk.LEFT)
+
+        self.btn_p2_man_policy = tk.Button(
+            p2_man_policy_frame, 
+            text="启用", 
+            fg='red', 
+            command=lambda: self.set_policy(int(self.ent_man_add_price_time.get()), int(self.ent_man_add_price.get()), self.ent_man_submit_price.get()), 
+            state=tk.NORMAL
+            )
+        self.btn_p2_man_policy.pack(side=tk.LEFT, pady=5)
+        p2_man_policy_frame.pack(fill=tk.X)
 
 
         p2_cancel_frame = tk.Frame(self.frame, bg='white')
@@ -599,6 +626,7 @@ class PolicyUi:
 
     def cancecl_policy(self):
         self.policy_thread_status = False
+        logger.log(logging.WARN, "策略已取消")
 
     def set_policy(self, inc_time, inc_price, advance_time):
 
@@ -608,7 +636,7 @@ class PolicyUi:
 
         if self.policy_thread_status == False:
             self.policy_thread_status = True
-            logger.log(logging.WARN, "出价时间: {} 加价：{} 提交秒数：{} 延时：{}ms".format(inc_time, inc_price, adv_t.second, delay_microsec))
+            logger.log(logging.WARN, "出价时间: {} 加价：{} 提交秒数：{} 网络延时：{}ms".format(inc_time, inc_price, adv_t.second, delay_microsec))
             threading.Thread(target=self.p2_autopolicy, args=(inc_time, inc_price, adv_t.second, delay_microsec,), daemon=True).start()
         else:
             logger.log(logging.ERROR, "正在执行策略，请先取消")
