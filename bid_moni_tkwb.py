@@ -5,10 +5,10 @@ import signal
 import subprocess
 import time
 from datetime import datetime, timedelta
+from sys import platform
 
 import tkinter as tk
 import tkinter.font as tkFont
-from selenium.webdriver.common import action_chains
 from tkinter.scrolledtext import ScrolledText
 from tkinter import Tk, ttk, VERTICAL, HORIZONTAL, N, S, E, W
 
@@ -135,7 +135,10 @@ class Chrome(threading.Thread):
         capabilities['goog:loggingPrefs'] = {"performance": "ALL"}
         selenumLogger.setLevel(logging.WARNING)
         global driver
-        driver = webdriver.Chrome(options=opts, desired_capabilities=capabilities)
+        if platform == "darwin":
+            driver = webdriver.Chrome(options=opts, desired_capabilities=capabilities)
+        else:
+            driver = webdriver.Chrome(executable_path=r".\chromedriver.exe", options=opts, desired_capabilities=capabilities)
         driver.get("http://testh5.alltobid.com/login?type=individual")
 
         for entry in driver.get_log('browser'):
@@ -543,6 +546,8 @@ class PolicyUi:
 
 
         p2_cancel_frame = tk.Frame(self.frame, bg='white')
+        self.lbl_policy = self.label(p2_cancel_frame, text="未设定")
+        self.lbl_policy.pack(side=tk.LEFT, pady=5)
         self.btn_cancel_policy = tk.Button(p2_cancel_frame, text="取消", command=lambda: self.cancecl_policy(), state=tk.NORMAL)
         self.btn_cancel_policy.pack(side=tk.LEFT, pady=5)
         p2_cancel_frame.pack(fill=tk.X)
@@ -638,6 +643,14 @@ class PolicyUi:
             self.policy_thread_status = True
             logger.log(logging.WARN, "出价时间: {} 加价：{} 提交秒数：{} 网络延时：{}ms".format(inc_time, inc_price, adv_t.second, delay_microsec))
             threading.Thread(target=self.p2_autopolicy, args=(inc_time, inc_price, adv_t.second, delay_microsec,), daemon=True).start()
+
+            global end_dt
+            
+            end_dt_m = end_dt.split(':')[0]
+            inc_dt = "{}:{}".format(end_dt_m, inc_time)
+            adv_dt = "{}:{}.{}".format(end_dt_m, adv_t.second, delay_microsec)
+
+            self.lbl_policy['text'] = "出价时间: {} 加价：{} 提交时间：{} ".format(inc_dt, inc_price, adv_dt)
         else:
             logger.log(logging.ERROR, "正在执行策略，请先取消")
 
