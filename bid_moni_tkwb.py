@@ -546,10 +546,12 @@ class PolicyUi:
 
 
         p2_cancel_frame = tk.Frame(self.frame, bg='white')
-        self.lbl_policy = self.label(p2_cancel_frame, text="未设定")
-        self.lbl_policy.pack(side=tk.LEFT, pady=5)
         self.btn_cancel_policy = tk.Button(p2_cancel_frame, text="取消", command=lambda: self.cancecl_policy(), state=tk.NORMAL)
         self.btn_cancel_policy.pack(side=tk.LEFT, pady=5)
+
+        self.lbl_policy = self.label(p2_cancel_frame, text="未设定")
+        self.lbl_policy.pack(side=tk.LEFT, pady=5)
+        
         p2_cancel_frame.pack(fill=tk.X)
 
 
@@ -646,9 +648,10 @@ class PolicyUi:
 
             global end_dt
             
-            end_dt_m = end_dt.split(':')[0]
-            inc_dt = "{}:{}".format(end_dt_m, inc_time)
-            adv_dt = "{}:{}.{}".format(end_dt_m, adv_t.second, delay_microsec)
+            end_dt_h = end_dt.split(':')[0]
+            end_dt_m = end_dt.split(':')[1]
+            inc_dt = "{}:{:02d}:{}".format(end_dt_h, int(end_dt_m)-1 , inc_time)
+            adv_dt = "{}:{:02d}:{}.{}".format(end_dt_h, int(end_dt_m)-1, adv_t.second, delay_microsec)
 
             self.lbl_policy['text'] = "出价时间: {} 加价：{} 提交时间：{} ".format(inc_dt, inc_price, adv_dt)
         else:
