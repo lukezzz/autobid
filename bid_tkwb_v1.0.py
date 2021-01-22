@@ -224,18 +224,25 @@ class LoginUi:
         self.label(username_frame, text="用户名:").pack(side=tk.LEFT, pady=5)
         self.txt_username = tk.StringVar()
         self.txt_username.set('12345678')
-        self.ent_username = tk.Entry(username_frame, textvariable=self.txt_username)
+        self.ent_username = tk.Entry(username_frame, textvariable=self.txt_username, width=12)
         self.ent_username.pack(side=tk.LEFT, pady=5)
+        self.label(username_frame, text="   密码:").pack(side=tk.LEFT, pady=10)
+        self.txt_password = tk.StringVar()
+        self.txt_password.set('12345')
+        self.ent_password = tk.Entry(username_frame, textvariable=self.txt_password, width=6)
+        self.ent_password.pack(side=tk.LEFT, pady=5)
         username_frame.pack(fill=tk.X)
 
         pwd_frame = tk.Frame(self.frame, bg='white')
-        self.label(pwd_frame, text="   密码:").pack(side=tk.LEFT, pady=10)
-        self.txt_password = tk.StringVar()
-        self.txt_password.set('12345')
-        self.ent_password = tk.Entry(pwd_frame, textvariable=self.txt_password)
-        self.ent_password.pack(side=tk.LEFT, pady=5)
-        self.btn_init_login = tk.Button(pwd_frame, text="开始模拟", command=self.init_login, state=tk.NORMAL)
-        self.btn_init_login.pack(side=tk.LEFT, padx=10)
+        self.label(pwd_frame, text="身份证:").pack(side=tk.LEFT, pady=10)
+        self.txt_identity = tk.StringVar()
+        self.txt_identity.set('')
+        self.ent_identity = tk.Entry(pwd_frame, textvariable=self.txt_identity, width=18)
+        self.ent_identity.pack(side=tk.LEFT, pady=5)
+        self.btn_init_login = tk.Button(pwd_frame, text="登陆", command=self.init_login, state=tk.NORMAL)
+        self.btn_init_login.pack(side=tk.LEFT, padx=8)
+        self.btn_init_start = tk.Button(pwd_frame, text="参加投标竞买", command=self.start_bid, state=tk.NORMAL)
+        self.btn_init_start.pack(side=tk.LEFT, padx=4)
         pwd_frame.pack(fill=tk.X)
 
 
@@ -272,6 +279,17 @@ class LoginUi:
         except NoSuchElementException:
             logger.log(logging.ERROR, "没有找到确认按钮")
             self.btn_init_login['state'] = tk.NORMAL
+
+        # find id if exists
+        try:
+            wtbuserid = driver.find_element(By.ID, "wtbuserid")
+            actions = ActionChains(driver)
+            actions.send_keys_to_element(wtbuserid, self.ent_identity.get())
+            actions.perform()
+            logger.log(logging.INFO, "输入身份证信息")
+
+        except Exception as e:
+            logger.log(logging.ERROR, "无需身份证信息")
         
         try:
             # type bid account
@@ -287,12 +305,27 @@ class LoginUi:
             logger.log(logging.INFO, "账号录入完毕")
             logger.log(logging.INFO, "等待完成验证码操作...")
 
-            threading.Thread(target=self.wait_user_click_captcha).start()
+            # confirm by start btn
+            # threading.Thread(target=self.wait_user_click_captcha).start()
             
 
         except Exception as e:
             logger.log(logging.ERROR, "登录错误")
        
+    def start_bid(self):
+        global cur_phrase
+        try:
+            driver.find_element(By.CLASS_NAME, 'walert').click()
+            logger.log(logging.ERROR, "参加投标竞买失败")
+            self.btn_init_login['state'] = tk.NORMAL
+
+        except:
+            driver.find_element(By.XPATH, '/html/body/div/div/div[1]/div/div[2]/div[2]/div[4]/span').click()
+            logger.log(logging.INFO, "参加投标竞买成功")
+            logger.log(logging.INFO, "等待开始...")
+            cur_phrase = 'init'
+            self.btn_init_login['state'] = tk.DISABLED
+
 
     def wait_user_click_captcha(self):
         # check 3 'wicon-point'
@@ -356,7 +389,7 @@ class StateUi:
         time_frame1.pack(fill=tk.X)
 
         time_frame2 = tk.Frame(self.frame, bg='white')
-        self.label(time_frame2, text="网络延时:").pack(side=tk.LEFT, pady=5)
+        self.label(time_frame2, text="延时:").pack(side=tk.LEFT, pady=5)
         self.lbl_cur_sys_delay = tk.Label(
             time_frame2, 
             text="0ms", 
@@ -506,14 +539,14 @@ class PolicyUi:
 
         p2_policy1_frame = tk.Frame(self.frame, bg='white')
         self.label(p2_policy1_frame, text="策略1: 52s + 400, 56.8s提交").pack(side=tk.LEFT, pady=5)
-        self.btn_p2_policy1 = tk.Button(p2_policy1_frame, text="策略1", fg='red',command=lambda: self.set_policy(52, 400, "56.8"), state=tk.NORMAL)
+        self.btn_p2_policy1 = tk.Button(p2_policy1_frame, text="启用策略1", fg='red',command=lambda: self.set_policy(52, 400, "56.8"), state=tk.NORMAL)
         self.btn_p2_policy1.pack(side=tk.LEFT, pady=5)
         p2_policy1_frame.pack(fill=tk.X)
 
 
         p2_policy2_frame = tk.Frame(self.frame, bg='white')
         self.label(p2_policy2_frame, text="策略2: 49s + 500, 57.3s提交").pack(side=tk.LEFT, pady=5)
-        self.btn_p2_policy2 = tk.Button(p2_policy2_frame, text="策略2", fg='red', command=lambda: self.set_policy(49, 500, "57.3"), state=tk.NORMAL)
+        self.btn_p2_policy2 = tk.Button(p2_policy2_frame, text="启用策略2", fg='red', command=lambda: self.set_policy(49, 500, "57.3"), state=tk.NORMAL)
         self.btn_p2_policy2.pack(side=tk.LEFT, pady=5)
         p2_policy2_frame.pack(fill=tk.X)
 
@@ -558,6 +591,8 @@ class PolicyUi:
     def label(self, frame, text, size=10, fg='gray'):
         return tk.Label(frame, text=text, bg='white', font=_font(size))
 
+
+    # p1 stage
     def p1_submit(self):
         global lowest_price 
         logger.log(logging.INFO, "当前价格：{}".format(lowest_price))
@@ -580,6 +615,7 @@ class PolicyUi:
 
             # #bidprice
             self.p1_alertbox()
+            driver.switch_to_window(driver.window_handles[-1])
             
 
         except NoSuchElementException as e:
@@ -592,29 +628,67 @@ class PolicyUi:
         try:
             driver.find_element(By.CLASS_NAME, 'whSetPriceD')
             logger.log(logging.INFO, "等待验证码")
-            threading.Thread(target=self.pricecaptcha).start()
+
+            # threading.Thread(target=self.pricecaptcha).start()
+            threading.Thread(target=self.p1_check_captcha).start()
+            
             
         except NoSuchElementException as e:
             print(e)
             # logger.log(logging.ERROR, "w")
     
+    def p1_check_captcha(self):
+
+        # waiting for finish captcha
+        whSetPriceD = driver.find_element(By.CLASS_NAME, 'whSetPriceD')
+        whpdTitleBox = whSetPriceD.find_element(By.CLASS_NAME, 'whpdTitleBox')
+        submit_price = whpdTitleBox.find_elements(By.TAG_NAME, 'span')[0]
+        logger.log(logging.ERROR, "{}".format(submit_price.text))
+        logger.log(logging.INFO, "等待完成验证码...")
+        captcha = whSetPriceD.find_element(By.ID, 'bidprice')
+        captcha.click()
+        code = ''
+        while True:
+            
+            code = captcha.get_attribute('value')
+            time.sleep(0.5)
+            if len(code) == 4:
+                break
+
+        # submit
+        whpdConfirm = whSetPriceD.find_element(By.CLASS_NAME, 'whpdConfirm')
+        actions = ActionChains(driver)
+        actions.click(whpdConfirm)
+        actions.perform()
+        logger.log(logging.DEBUG, "验证码: {} 出价时间: {}".format(code, datetime.now()))
+
+
+    # p2 stage
+    # manual 
     def manual_plus(self):
+        driver.switch_to_window(driver.window_handles[-1])
         try:
             price = int(self.ent_add_price.get())
             if price % 100 != 0:
                 logger.log(logging.ERROR, "输入价格错误，请重新输入")
                 return
             
-            threading.Thread(target=self.p2_plus, args=(price,), daemon=True).start()
+            threading.Thread(target=self.p2_plus_no_submit, args=(price,), daemon=True).start()
         except Exception as e:
             logger.log(logging.ERROR, "输入价格错误，请重新输入")
 
-
-    def p2_plus(self, price):
+    def p2_plus_no_submit(self, price):
         logger.log(logging.INFO, "+ {}".format(price))
         global lowest_price
         logger.log(logging.INFO, "当前价格：{}".format(lowest_price))
-        
+
+        try:
+            whSetPriceD = driver.find_element(By.CLASS_NAME, 'whSetPriceD')
+            captcha = whSetPriceD.find_element(By.ID, 'bidprice')
+            captcha.click()
+        except Exception as e:
+            print(e)
+
         try:
             whsetpricetip = driver.find_element(By.XPATH, '/html/body/div/div/div[2]/div/div[3]/div[2]/div[2]/div/div[2]/div[3]/div[2]/div/input')
             whsetpricebtn = driver.find_element(By.CLASS_NAME, 'whsetpricebtn')
@@ -626,11 +700,16 @@ class PolicyUi:
             actions.click(whsetpricebtn)
             actions.perform()
 
-            self.pricecaptcha()
+            # self.process_captacha()
+
+            if self.can_submit():
+                logger.log(logging.DEBUG, "验证码输入完成")
 
         except Exception as e:
             print(e)
 
+
+    # set policy
     def cancecl_policy(self):
         self.policy_thread_status = False
         logger.log(logging.WARN, "策略已取消")
@@ -643,22 +722,24 @@ class PolicyUi:
 
         if self.policy_thread_status == False:
             self.policy_thread_status = True
-            logger.log(logging.WARN, "出价时间: {} 加价：{} 提交秒数：{} 网络延时：{}ms".format(inc_time, inc_price, adv_t.second, delay_microsec))
-            threading.Thread(target=self.p2_autopolicy, args=(inc_time, inc_price, adv_t.second, delay_microsec,), daemon=True).start()
+            logger.log(logging.WARN, "出价时间: {} 加价：{} 提交秒数：{} 延时：{}ms".format(inc_time, inc_price, adv_t.second, delay_microsec))
+            threading.Thread(target=self.p2_start_policy, args=(inc_time, inc_price, adv_t.second, delay_microsec,), daemon=True).start()
 
             global end_dt
             
             end_dt_h = end_dt.split(':')[0]
             end_dt_m = end_dt.split(':')[1]
-            inc_dt = "{}:{:02d}:{}".format(end_dt_h, int(end_dt_m)-1 , inc_time)
+            # inc_dt = "{}:{:02d}:{}".format(end_dt_h, int(end_dt_m)-1 , inc_time)
             adv_dt = "{}:{:02d}:{}.{}".format(end_dt_h, int(end_dt_m)-1, adv_t.second, delay_microsec)
 
-            self.lbl_policy['text'] = "出价时间: {} 加价：{} 提交时间：{} ".format(inc_dt, inc_price, adv_dt)
+            self.lbl_policy['text'] = "出价时间: {} 加价：{} 提交时间：{} ".format(inc_time, inc_price, adv_dt)
         else:
             logger.log(logging.ERROR, "正在执行策略，请先取消")
 
+        driver.switch_to_window(driver.window_handles[-1])
 
-    def p2_autopolicy(self, inc_time, inc_price, advance_sec, delay_microsec):
+
+    def p2_start_policy(self, inc_time, inc_price, advance_sec, delay_microsec):
 
         global lowest_price
         global end_dt
@@ -678,73 +759,47 @@ class PolicyUi:
                 logger.log(logging.DEBUG, "出价时间: {}".format(datetime.now()))
                 break
 
-            time.sleep(0.2)
-
-        while(self.policy_thread_status):
-            if diff_timer(end_dt, advance_sec, delay_microsec):
-                if self.pricecaptcha():
-                    break
-            time.sleep(0.2)    
-
-    def p2_policy1(self):
-        # simple capatcha: 49s + 700, submit at 56s
-        logger.log(logging.INFO, "执行策略1: 52s + 400, 56.8s提交")
-        global lowest_price
-        global end_dt
-        # check dt
-        # end_dt = self.state.lbl_p2_end_dt_content.cget("text")
-        while(True):
-            if diff_timer(end_dt, 52, 0):
-                whsetpricetip = driver.find_element(By.XPATH, '/html/body/div/div/div[2]/div/div[3]/div[2]/div[2]/div/div[2]/div[3]/div[2]/div/input')
-                whsetpricebtn = driver.find_element(By.CLASS_NAME, 'whsetpricebtn')
-                submit_price = int(lowest_price) + 400
-                actions = ActionChains(driver)
-                actions.send_keys_to_element(whsetpricetip, Keys.COMMAND+"a")
-                actions.send_keys_to_element(whsetpricetip, Keys.BACK_SPACE)
-                actions.send_keys_to_element(whsetpricetip, submit_price)
-                actions.click(whsetpricebtn)
-                actions.perform()
-                logger.log(logging.DEBUG, "出价时间: {}".format(datetime.now()))
-                break
-
-            time.sleep(0.2)
-
-        while(True):
-            if diff_timer(end_dt, 56, 800):
-                if self.pricecaptcha():
-                    break
-            time.sleep(0.2)    
+            time.sleep(0.3)
 
 
-    def p2_policy2(self):
-        # difficute capatcha: 49s + 600, submit at 57s
-        logger.log(logging.INFO, "执行策略2: 49s + 400, 57.3s提交")
-        global lowest_price
-        global end_dt
-        # end_dt = self.state.lbl_p2_end_dt_content.cget("text")
-        while(True):
-            if diff_timer(end_dt, 49, 0):
-                whsetpricetip = driver.find_element(By.XPATH, '/html/body/div/div/div[2]/div/div[3]/div[2]/div[2]/div/div[2]/div[3]/div[2]/div/input')
-                whsetpricebtn = driver.find_element(By.CLASS_NAME, 'whsetpricebtn')
-                submit_price = int(lowest_price) + 400
-                actions = ActionChains(driver)
-                actions.send_keys_to_element(whsetpricetip, Keys.COMMAND+"a")
-                actions.send_keys_to_element(whsetpricetip, Keys.BACK_SPACE)
-                actions.send_keys_to_element(whsetpricetip, submit_price)
-                actions.click(whsetpricebtn)
-                actions.perform()
-                logger.log(logging.DEBUG, "出价时间: {}".format(datetime.now()))
-                break
-            time.sleep(0.2)
+        # wait until captcha done
+        if self.can_submit():
+            logger.log(logging.DEBUG, "验证码输入完成")
+            # wait for submit
+            while(self.policy_thread_status):
+                if diff_timer(end_dt, advance_sec, delay_microsec):
+                    # if self.process_captacha():
+                    #     break
+                    if self.process_submit():
+                        break
+                time.sleep(0.1)    
 
-        while(True):
-            if diff_timer(end_dt, 57, 300):
-                if self.pricecaptcha():
-                    break
-            time.sleep(0.2)    
+    def can_submit(self):
+        # waiting for finish captcha
+        whSetPriceD = driver.find_element(By.CLASS_NAME, 'whSetPriceD')
+        whpdTitleBox = whSetPriceD.find_element(By.CLASS_NAME, 'whpdTitleBox')
+        submit_price = whpdTitleBox.find_elements(By.TAG_NAME, 'span')[0]
+        logger.log(logging.ERROR, "{}".format(submit_price.text))
+        logger.log(logging.INFO, "等待完成验证码...")
+        captcha = whSetPriceD.find_element(By.ID, 'bidprice')
+        captcha.click()
+        code = ''
+        while True:
+            code = captcha.get_attribute('value')
+            time.sleep(0.3)
+            if len(code) == 4:
+                return True
 
+    def process_submit(self):
+        # submit
+        whSetPriceD = driver.find_element(By.CLASS_NAME, 'whSetPriceD')
+        whpdConfirm = whSetPriceD.find_element(By.CLASS_NAME, 'whpdConfirm')
+        actions = ActionChains(driver)
+        actions.click(whpdConfirm)
+        actions.perform()
+        logger.log(logging.DEBUG, "出价时间: {}".format(datetime.now()))
         
-    def pricecaptcha(self):
+    def process_captacha(self):
         whSetPriceD = driver.find_element(By.CLASS_NAME, 'whSetPriceD')
         whpdTitleBox = whSetPriceD.find_element(By.CLASS_NAME, 'whpdTitleBox')
         submit_price = whpdTitleBox.find_elements(By.TAG_NAME, 'span')[0]
@@ -821,7 +876,7 @@ class App:
         # self.root.geometry("{}x{}".format(300, 800))
         center_window(self.root, 400, 750)
 
-        self.root.title('拍牌模拟')
+        self.root.title('202101拍牌')
 
         self.root.grab_set()
 
@@ -861,7 +916,7 @@ class App:
             return tk.Label(frame, text=text, bg='white', fg='black', height=2, font=_font(size=size, bold=tkFont.BOLD))
 
         frame = tk.Frame(parent, bg='white')
-        label(frame, '拍牌模拟测试v0.1', 16, True).pack(side=tk.LEFT, padx=10)
+        label(frame, '拍牌v0.1', 16, True).pack(side=tk.LEFT, padx=10)
 
         return frame
 
@@ -913,5 +968,5 @@ if __name__ == '__main__':
     app = App(root)
     
     
-    root.call('wm', 'attributes', '.', '-topmost', '1')
+    # root.call('wm', 'attributes', '.', '-topmost', '1')
     app.root.mainloop()
