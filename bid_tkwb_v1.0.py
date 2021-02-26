@@ -1,3 +1,4 @@
+#coding=utf-8
 import logging
 import queue
 import threading
@@ -139,7 +140,7 @@ class Chrome(threading.Thread):
             driver = webdriver.Chrome(options=opts, desired_capabilities=capabilities)
         else:
             driver = webdriver.Chrome(executable_path=r".\chromedriver.exe", options=opts, desired_capabilities=capabilities)
-        driver.get("http://testh5.alltobid.com/login?type=individual")
+        driver.get("https://repaimai2.alltobid.com/login?type=individual")
 
         for entry in driver.get_log('browser'):
             logger.debug(entry)
@@ -282,7 +283,7 @@ class LoginUi:
 
         # find id if exists
         try:
-            wtbuserid = driver.find_element(By.ID, "wtbuserid")
+            wtbuserid = driver.find_element(By.ID, "wtbidCard")
             actions = ActionChains(driver)
             actions.send_keys_to_element(wtbuserid, self.ent_identity.get())
             actions.perform()
