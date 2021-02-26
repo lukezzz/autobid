@@ -88,7 +88,7 @@ def attach_to_session(executor_url, session_id):
 def diff_timer(end, seconds, microseconds):
     end_dt = datetime.strptime(end, "%H:%M")
     seconds = 60 - seconds
-    now = datetime.now() + timedelta(seconds=seconds, microseconds=microseconds)
+    now = datetime.now() + timedelta(seconds=seconds) - timedelta(microseconds=microseconds*1000)
     # print(now)
     # nowstr = now.strftime("%H:%M:%S.%f")
     # comp_dt = datetime.strptime(nowstr, "%H:%M:%S")
@@ -141,6 +141,7 @@ class Chrome(threading.Thread):
         else:
             driver = webdriver.Chrome(executable_path=r".\chromedriver.exe", options=opts, desired_capabilities=capabilities)
         driver.get("https://repaimai2.alltobid.com/login?type=individual")
+        # driver.get("http://testh5.alltobid.com/login?type=individual")
 
         for entry in driver.get_log('browser'):
             logger.debug(entry)
@@ -773,7 +774,7 @@ class PolicyUi:
                     #     break
                     if self.process_submit():
                         break
-                time.sleep(0.1)    
+                time.sleep(0.05)    
 
     def can_submit(self):
         # waiting for finish captcha
@@ -789,16 +790,18 @@ class PolicyUi:
             code = captcha.get_attribute('value')
             time.sleep(0.3)
             if len(code) == 4:
+                logger.log(logging.INFO, "验证码完成")
                 return True
 
     def process_submit(self):
-        # submit
+        # submit need 300ms to process
+        logger.log(logging.DEBUG, "出价开始")
         whSetPriceD = driver.find_element(By.CLASS_NAME, 'whSetPriceD')
         whpdConfirm = whSetPriceD.find_element(By.CLASS_NAME, 'whpdConfirm')
         actions = ActionChains(driver)
         actions.click(whpdConfirm)
         actions.perform()
-        logger.log(logging.DEBUG, "出价时间: {}".format(datetime.now()))
+        logger.log(logging.DEBUG, "出价结束")
         
     def process_captacha(self):
         whSetPriceD = driver.find_element(By.CLASS_NAME, 'whSetPriceD')
@@ -877,7 +880,7 @@ class App:
         # self.root.geometry("{}x{}".format(300, 800))
         center_window(self.root, 400, 750)
 
-        self.root.title('202101拍牌')
+        self.root.title('202102拍牌')
 
         self.root.grab_set()
 
